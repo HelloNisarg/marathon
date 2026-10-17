@@ -1,0 +1,3 @@
+# Static app: Netlify publishes these files directly, without a build command.
+[build]
+  publish = "dist"
