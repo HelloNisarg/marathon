@@ -1,3 +1,4 @@
+import {cleanHealthDay} from './health.mjs';
 export const START='2026-11-01', TRAINING='2026-11-02', END='2027-02-01';
 export const DEFAULTS={name:'Nisarg',waterGoal:2000,stepGoal:10000,runTime:'07:00',strengthTime:'18:30',waterStart:'09:00',waterEnd:'19:00',waterInterval:120,waterReminders:true,activityReminders:true,browserReminders:false};
 export const localDate=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -77,6 +78,7 @@ export function normalize(input){
   d.custom=Array.isArray(value.custom)?value.custom.slice(0,12).map((x,i)=>({id:`custom-${i}`,label:String(x?.label||'My goal').slice(0,80),done:!!x?.done})):[];
   if(value.exercises&&typeof value.exercises==='object')for(let i=0;i<6;i++)d.exercises[i]=!!value.exercises[i];
   if(value.targets)d.targets={water:number(value.targets.water,500,5000,settings.waterGoal),steps:number(value.targets.steps,0,30000,settings.stepGoal)};
+  if(value.health){try{d.health=cleanHealthDay(value.health)}catch{}}
   days[key]=d;
  }
  return {version:1,settings,days};

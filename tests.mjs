@@ -64,5 +64,15 @@ test('app renders all views and click handlers save, undo and restore local logs
  for(const v of ['plan','progress','settings','today']){await click({action:'view',view:v});assert.ok(elements.get('#main').innerHTML.length>1000);assert.ok(!elements.get('#main').innerHTML.includes('undefined'));}
  await click({action:'date',date:addDays(localDate(),1)});const before=memory.get('stride-seven-v1');await click({action:'water',amount:'250'});assert.equal(memory.get('stride-seven-v1'),before,'future logging is blocked');
  await click({action:'session',date:'2026-11-03'});assert.match(elements.get('#modal').innerHTML,/Bodyweight squat/);
+ await click({action:'date',date:localDate()});
+ const sync={format:'stride-health-connect-v1',source:'com.sec.android.app.shealth',syncedAt:new Date().toISOString(),days:[{date:localDate(),steps:12345,sessions:[{id:'run1',type:'run',start:localDate()+'T01:00:00Z',end:localDate()+'T01:30:00Z',minutes:30,km:3}]}]};
+ windowEvents.get('stride-health-result')({detail:sync});
+ assert.match(elements.get('#modal').innerHTML,/Check these days/);
+ await click({action:'health-apply'});
+ saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].steps,12345);assert.equal(saved.days[localDate()].water,250);
+ windowEvents.get('stride-health-result')({detail:sync});await click({action:'health-apply'});
+ saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].steps,12345);assert.equal(saved.days[localDate()].health.sessions.length,1);
+ await click({action:'water',amount:'250'});await click({action:'health-undo'});
+ saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].water,500,'undo sync preserves later habit edits');
  globalThis.setInterval=realInterval;
 });

@@ -63,3 +63,14 @@ receive your local logs. There is no application-level account/login system.
 
 - https://docs.netlify.com/build/configure-builds/file-based-configuration/
 - https://www.netlify.com/pricing/
+
+## Samsung Health (personal-use Android app)
+
+The free Android 14+ app is available under **Settings → Samsung Health** on the
+website, with source and build instructions in `android/README.md`. It reads
+Samsung Health through Health Connect, on demand, with three read permissions.
+The browser and installed app keep separate logs; use backup export/restore to
+move between them. No paid backend, subscriptions or health uploads.
+
+Run all checks with `node --test tests.mjs health-tests.mjs`. The APK is compiled
+and signed, but still requires Samsung phone verification.

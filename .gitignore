@@ -5,3 +5,9 @@ node_modules/
 .env.*
 stride-backup-*.json
 *.log
+
+android/build/
+*.keystore
+*.p12
+*.jks
+*signing-password*
