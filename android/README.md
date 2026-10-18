@@ -128,6 +128,10 @@ tracking on app launch. Phone-sensor step totals remain separate from Samsung
 steps and may be exported from the live screen as raw JSON. Neither native
 step history nor an in-progress run is contained in the regular planner backup.
 
-The UI takes inspiration from Apple's published clarity, hierarchy,
-consistency and accessibility principles. It is an Android/web app; it does
-not use Apple's proprietary components or services.
+The UI uses Stride's own warm, forest-green palette, clear hierarchy and
+comfortable controls on Android and the web.
+
+## Version 1.3
+
+The visual update returns to Stride’s forest-green identity and warm surfaces.
+Install over the earlier signed app. No permissions or data format changed.

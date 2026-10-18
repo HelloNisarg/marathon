@@ -91,6 +91,12 @@ Hydration reminders are optional local Android notifications scheduled with
 inexact alarms. Strength mode gives guided sets and written exercise tutorials.
 Progress combines Samsung Health, live and manual activity records, with
 conservative duplicate checks. Finished live sessions are included in the
-regular JSON backup. The responsive UI follows Apple's published principles
-of hierarchy, clarity and accessibility while retaining the Stride identity.
+regular JSON backup. The responsive UI uses Stride's own forest-green and warm-neutral visual style,
+with clear actions and comfortable spacing.
 The Android package has no Internet permission or paid backend.
+
+## Android 1.3 visual update
+
+Restores Stride’s forest-green palette with warmer surfaces and a clearer
+workout layout. Functionality and package identity remain the same. Install
+over the earlier Android version to preserve local data.
