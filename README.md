@@ -74,3 +74,13 @@ move between them. No paid backend, subscriptions or health uploads.
 
 Run all checks with `node --test tests.mjs health-tests.mjs`. The APK is compiled
 and signed, but still requires Samsung phone verification.
+
+## Android 1.1: live tracking
+
+The signed Android download now includes outdoor GPS run/walk sessions, an opt-in
+all-day phone step counter and local goal-completion notifications. Open Today →
+Open live tracking. Set your own name and step target in Settings; every phone
+stores an independent profile with no account or paid backend. Native live history
+is separate from planner/Samsung imports and has its own export. See
+[Android setup and limitations](android/README.md). Actual device testing remains
+required; host tests cannot validate Samsung sensor/battery behavior.

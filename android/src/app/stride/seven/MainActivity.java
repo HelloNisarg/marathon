@@ -107,6 +107,7 @@ public class MainActivity extends Activity {
         }
     }
     public final class Bridge {
+        @JavascriptInterface public void openLiveTracking(String name,int stepGoal){runOnUiThread(()->{getSharedPreferences(TrackingService.PREF,0).edit().putString("name",name==null?"Your profile":name.substring(0,Math.min(40,name.length()))).putInt("stepGoal",Math.max(1000,Math.min(30000,stepGoal))).apply();startActivity(new Intent(MainActivity.this,TrackingActivity.class));});}
         @JavascriptInterface public void syncSamsungHealth(){runOnUiThread(()->connect());}
         @JavascriptInterface public void saveFile(String name,String content,String mime){
             if(content==null||content.length()>5_000_000||!Arrays.asList("application/json","text/calendar").contains(mime))return;

@@ -4,6 +4,33 @@ Personal-use, offline Android version of the Stride tracker. No subscriptions,
 paid APIs, server, cloud database, or Play Store listing is required for this
 personal build. You install the signed APK on your own compatible phone.
 
+## Live tracking (version 1.1)
+
+Install the update over version 1.0 without uninstalling. The same signing key and
+package preserve existing planner and Samsung Health data. In Settings, change your
+name and step goal; each phone stores an independent profile, with no login/server.
+Open **Today → Open live tracking** (also available in Settings).
+
+- Enable all-day step counting and grant Physical activity + notification access.
+  Counting starts from enable time, not midnight retrospectively. Keep the phone
+  with you. Steps while counting is off are excluded. A cumulative sensor batch
+  spanning midnight is discarded because its individual step times are unknown.
+- Select Run or Walk and a distance target; Start requests precise location.
+  Pause/Resume excludes paused time and distance. Finish saves the session.
+- Daily steps and session distance each trigger one goal notification. Test the
+  notification from the tracking screen; Android channel settings and Do Not
+  Disturb control whether it sounds. Goal completion does not stop a workout.
+- An ongoing notification keeps tracking visible. Reboot, force-stop, permission
+  revocation or OEM battery restrictions can stop tracking. Reopen and enable step
+  counting again. Interrupted workouts recover paused from the last checkpoint.
+- GPS is outdoor-only approximate distance, not a route map. Low-accuracy fixes,
+  implausible speed and long gaps are excluded. Step counting needs a hardware
+  step-counter sensor. Neither feature is guaranteed when the OS kills the app.
+- Live history and step totals are separate from planner/Health Connect totals;
+  they are never summed together. Export live history from the tracking screen;
+  planner backup does not contain native live history. Live export is archival
+  JSON (no restore UI yet). GPS coordinates are not persisted.
+
 ## Connect Samsung Health
 
 1. In Samsung Health, open Settings → Health Connect. Let Samsung Health write
