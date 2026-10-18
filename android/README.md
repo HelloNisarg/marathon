@@ -26,10 +26,10 @@ Open **Today → Open live tracking** (also available in Settings).
 - GPS is outdoor-only approximate distance, not a route map. Low-accuracy fixes,
   implausible speed and long gaps are excluded. Step counting needs a hardware
   step-counter sensor. Neither feature is guaranteed when the OS kills the app.
-- Live history and step totals are separate from planner/Health Connect totals;
-  they are never summed together. Export live history from the tracking screen;
-  planner backup does not contain native live history. Live export is archival
-  JSON (no restore UI yet). GPS coordinates are not persisted.
+- Completed sessions appear in the planner’s combined history and backup.
+  Phone-sensor step totals remain separate from Samsung Health totals; they are
+  never summed together. The live screen can export raw sensor steps. GPS
+  coordinates are not persisted.
 
 ## Connect Samsung Health
 
@@ -102,3 +102,32 @@ If no data appears, check both Samsung Health's write permissions and Stride's
 read permissions. Open Samsung Health and wait for watch/phone synchronization,
 then retry. If any permission is refused or a read fails, no partial import is
 applied. Keep Android's security checks enabled during installation.
+
+## Version 1.2: hydration, guided workouts, combined history
+
+Install the signed update over the earlier app. In Settings save your water goal,
+quiet hours and interval, then select **Enable phone water reminders**. Android
+asks for notification permission. A local inexact alarm posts water nudges even
+when Stride is closed; times may be delayed by Android battery management.
+When you reach the water goal recorded in Stride the nudges stop that day.
+Turning off phone reminders cancels the next alarm. After reboot, the next
+alarm is rescheduled. Browser alerts and calendar import remain separate.
+
+**Strength** shows the next planned session, six movement tutorials, form cues,
+easier variations, set counts and a 60-second rest timer. The last set marks
+the scheduled workout complete. Future sessions can be previewed but cannot
+be logged until their day. Tutorials are written, not video.
+
+**Progress → Activity history** merges manual, Samsung and live records.
+Matching start times, duration and distance suppress confident cross-source
+duplicates. Manual runs on an already-tracked day remain visible but are not
+added to running totals. Old live records without start times may still be
+shown twice; review them rather than assuming totals are exact. Finished live
+sessions are included in the regular planner backup and restored to native
+tracking on app launch. Phone-sensor step totals remain separate from Samsung
+steps and may be exported from the live screen as raw JSON. Neither native
+step history nor an in-progress run is contained in the regular planner backup.
+
+The UI takes inspiration from Apple's published clarity, hierarchy,
+consistency and accessibility principles. It is an Android/web app; it does
+not use Apple's proprietary components or services.

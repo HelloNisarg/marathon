@@ -16,7 +16,7 @@ public class TrackingService extends Service implements SensorEventListener, Loc
     static final String PREF="stride-tracking";
     SharedPreferences p; SensorManager sensors; LocationManager locations;
     boolean counting=false,active=false,paused=false; double meters=0; long elapsed=0,segment=0;
-    Location previous; String id="",kind="Run",date=""; double goal=7000;
+    Location previous; String id="",kind="Run",date="",started=""; double goal=7000;
     final Handler timer=new Handler();
     static String today(){return LocalDate.now().toString();}
     @Override public void onCreate(){super.onCreate();alive=true;p=getSharedPreferences(PREF,0);sensors=getSystemService(SensorManager.class);locations=getSystemService(LocationManager.class);
@@ -24,7 +24,7 @@ public class TrackingService extends Service implements SensorEventListener, Loc
         nm.createNotificationChannel(new NotificationChannel("tracking","Live tracking",NotificationManager.IMPORTANCE_LOW));
         nm.createNotificationChannel(new NotificationChannel("goals","Goal completed",NotificationManager.IMPORTANCE_HIGH));
         // Recover an interrupted workout as paused. Never count downtime or bridge a GPS gap.
-        active=p.getBoolean("active",false);paused=active;meters=p.getFloat("meters",0);elapsed=p.getLong("elapsed",0);id=p.getString("id","");kind=p.getString("kind","Run");date=p.getString("date",today());goal=p.getFloat("goal",7000);
+        active=p.getBoolean("active",false);paused=active;meters=p.getFloat("meters",0);elapsed=p.getLong("elapsed",0);id=p.getString("id","");started=p.getString("started","");kind=p.getString("kind","Run");date=p.getString("date",today());goal=p.getFloat("goal",7000);
         timer.post(tick);
     }
     final Runnable tick=new Runnable(){public void run(){if(alive){persist();if(counting||active)notifyStatus();timer.postDelayed(this,3000);}}};
@@ -48,7 +48,7 @@ public class TrackingService extends Service implements SensorEventListener, Loc
                 if(counter==null){error("This phone does not expose a step-counter sensor.");stopIfIdle();return START_NOT_STICKY;}
                 if(!counting){counting=true;p.edit().remove("sensor.last").apply();foreground();if(!sensors.registerListener(this,counter,SensorManager.SENSOR_DELAY_NORMAL)){counting=false;error("Could not enable step counting.");}}
             }else if("steps-off".equals(action)){counting=false;sensors.unregisterListener(this);p.edit().remove("sensor.last").apply();}
-            else if("start".equals(action)&&!active){active=true;paused=false;meters=0;elapsed=0;segment=SystemClock.elapsedRealtime();id=UUID.randomUUID().toString();kind=i.getStringExtra("kind");if(!"Walk".equals(kind))kind="Run";date=today();goal=Math.max(100,Math.min(100000,i.getDoubleExtra("goal",7000)));foreground();gps();}
+            else if("start".equals(action)&&!active){active=true;paused=false;meters=0;elapsed=0;segment=SystemClock.elapsedRealtime();id=UUID.randomUUID().toString();started=Instant.now().toString();kind=i.getStringExtra("kind");if(!"Walk".equals(kind))kind="Run";date=today();goal=Math.max(100,Math.min(100000,i.getDoubleExtra("goal",7000)));foreground();gps();}
             else if("pause".equals(action)&&active&&!paused){elapsed=duration();paused=true;locations.removeUpdates(this);previous=null;}
             else if("resume".equals(action)&&active&&paused){paused=false;segment=SystemClock.elapsedRealtime();foreground();gps();}
             else if("finish".equals(action)&&active){elapsed=duration();paused=true;locations.removeUpdates(this);previous=null;saveSession();active=false;}
@@ -58,7 +58,7 @@ public class TrackingService extends Service implements SensorEventListener, Loc
     }
     void gps(){previous=null;p.edit().putString("gps","Waiting for an accurate outdoor GPS fix…").apply();locations.requestLocationUpdates(LocationManager.GPS_PROVIDER,2000,2,this);}
     void error(String text){p.edit().putString("error",text).apply();}
-    void persist(){p.edit().putBoolean("counting",counting).putBoolean("active",active).putBoolean("paused",paused).putFloat("meters",(float)meters).putLong("elapsed",duration()).putString("id",id).putString("kind",kind).putString("date",date).putFloat("goal",(float)goal).apply();}
+    void persist(){p.edit().putBoolean("counting",counting).putBoolean("active",active).putBoolean("paused",paused).putFloat("meters",(float)meters).putLong("elapsed",duration()).putString("id",id).putString("kind",kind).putString("date",date).putString("started",started).putFloat("goal",(float)goal).apply();}
     void stopIfIdle(){if(!counting&&!active){stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();}}
     void checkGoals(){int target=p.getInt("stepGoal",10000);if(TrackingMath.reached(steps(),target))alert("notified.steps."+today(),"Daily step target complete!",String.format(Locale.US,"%,d / %,d steps. Well done!",steps(),target));if(active&&TrackingMath.reached(meters,goal))alert("notified.session."+id,kind+" target complete!",String.format(Locale.US,"You reached %.2f km. Tap to view or finish your session.",goal/1000));}
     @Override public void onSensorChanged(SensorEvent e){if(!counting)return;long now=(long)e.values[0],last=p.getLong("sensor.last",-1);String day=Instant.ofEpochMilli(System.currentTimeMillis()-(SystemClock.elapsedRealtimeNanos()-e.timestamp)/1000000).atZone(ZoneId.systemDefault()).toLocalDate().toString();long delta=TrackingMath.stepDelta(last,now,day.equals(p.getString("sensor.day",day)));
@@ -73,7 +73,7 @@ public class TrackingService extends Service implements SensorEventListener, Loc
         previous=l;persist();checkGoals();notifyStatus();
     }
     @Override public void onProviderDisabled(String provider){previous=null;p.edit().putString("gps","GPS is disabled. Enable Location to continue measuring distance.").apply();}
-    void saveSession(){try{JSONArray history=new JSONArray(p.getString("history","[]"));JSONObject s=new JSONObject();s.put("id",id).put("date",date).put("type",kind).put("meters",meters).put("elapsedMs",elapsed).put("targetMeters",goal);history.put(s);p.edit().putString("history",history.toString()).apply();}catch(JSONException e){error("Could not save this session. Keep the app open and export your records.");}}
+    void saveSession(){try{JSONArray history=new JSONArray(p.getString("history","[]"));JSONObject s=new JSONObject();s.put("id",id).put("date",date).put("start",started).put("end",Instant.now().toString()).put("type",kind).put("meters",meters).put("elapsedMs",elapsed).put("targetMeters",goal);history.put(s);p.edit().putString("history",history.toString()).apply();}catch(JSONException e){error("Could not save this session. Keep the app open and export your records.");}}
     @Override public IBinder onBind(Intent i){return null;}
     @Override public void onDestroy(){if(active&&!paused){elapsed=duration();paused=true;}alive=false;timer.removeCallbacks(tick);sensors.unregisterListener(this);locations.removeUpdates(this);counting=false;persist();super.onDestroy();}
 }

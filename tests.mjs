@@ -61,7 +61,8 @@ test('app renders all views and click handlers save, undo and restore local logs
  let saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].water,750);
  await click({action:'undo-water'});saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].water,250);
  await click({action:'toggle',key:'protein'});saved=JSON.parse(memory.get('stride-seven-v1'));assert.equal(saved.days[localDate()].protein,true);
- for(const v of ['plan','progress','settings','today']){await click({action:'view',view:v});assert.ok(elements.get('#main').innerHTML.length>1000);assert.ok(!elements.get('#main').innerHTML.includes('undefined'));}
+ for(const v of ['plan','workout','progress','settings','today']){await click({action:'view',view:v});assert.ok(elements.get('#main').innerHTML.length>1000);assert.ok(!elements.get('#main').innerHTML.includes('undefined'));}
+ await click({action:'view',view:'workout'});assert.match(elements.get('#main').innerHTML,/How to do it/);
  await click({action:'date',date:addDays(localDate(),1)});const before=memory.get('stride-seven-v1');await click({action:'water',amount:'250'});assert.equal(memory.get('stride-seven-v1'),before,'future logging is blocked');
  await click({action:'session',date:'2026-11-03'});assert.match(elements.get('#modal').innerHTML,/Bodyweight squat/);
  await click({action:'date',date:localDate()});

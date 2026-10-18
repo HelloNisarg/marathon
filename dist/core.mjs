@@ -1,4 +1,6 @@
 import {cleanHealthDay} from './health.mjs';
+import {cleanLiveSessions} from './activity.mjs';
+import {cleanStrength} from './strength.mjs';
 export const START='2026-11-01', TRAINING='2026-11-02', END='2027-02-01';
 export const DEFAULTS={name:'Nisarg',waterGoal:2000,stepGoal:10000,runTime:'07:00',strengthTime:'18:30',waterStart:'09:00',waterEnd:'19:00',waterInterval:120,waterReminders:true,activityReminders:true,browserReminders:false};
 export const localDate=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -37,7 +39,7 @@ export function session(date){
  return {type:'run',title:dow===6?'Your longer, easy outing':'Find your easy pace',detail:run.text,minutes:run.minutes+10,week};
 }
 export function setsFor(week,index){return week<=2||week===13?'1–2':week<=4||index>=3?'2':'3';}
-export function emptyDay(){return {water:0,waterEntries:[],steps:0,sleep:0,protein:false,workout:false,km:0,minutes:0,weight:null,waist:null,note:'',mood:'',custom:[],exercises:{}};}
+export function emptyDay(){return {water:0,waterEntries:[],steps:0,sleep:0,protein:false,workout:false,km:0,minutes:0,weight:null,waist:null,note:'',mood:'',custom:[],exercises:{},strength:null};}
 export function targets(state,date){const saved=state.days[date]?.targets;return saved||{water:state.settings.waterGoal,steps:session(date).type==='recovery'?0:state.settings.stepGoal};}
 export function goals(state,date){const d=state.days[date]||emptyDay(),t=targets(state,date);const list=[{id:'workout',label:session(date).type==='recovery'?'Give yourself a recovery day':'Complete today’s movement',done:!!d.workout},{id:'water',label:'Hydration goal',done:d.water>=t.water},{id:'protein',label:'Protein with my meals',done:!!d.protein},{id:'sleep',label:'At least 7 hours of sleep',done:d.sleep>=7}];if(t.steps>0)list.push({id:'steps',label:'Daily steps',done:d.steps>=t.steps});for(const c of d.custom||[])list.push({id:c.id,label:c.label,done:!!c.done,custom:true});return list;}
 export function dayScore(state,date){const g=goals(state,date);return {done:g.filter(x=>x.done).length,total:g.length};}
@@ -79,7 +81,8 @@ export function normalize(input){
   if(value.exercises&&typeof value.exercises==='object')for(let i=0;i<6;i++)d.exercises[i]=!!value.exercises[i];
   if(value.targets)d.targets={water:number(value.targets.water,500,5000,settings.waterGoal),steps:number(value.targets.steps,0,30000,settings.stepGoal)};
   if(value.health){try{d.health=cleanHealthDay(value.health)}catch{}}
+  d.strength=cleanStrength(value.strength);
   days[key]=d;
  }
- return {version:1,settings,days};
+ return {version:1,settings,days,liveSessions:cleanLiveSessions(input.liveSessions)};
 }

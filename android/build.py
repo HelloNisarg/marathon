@@ -16,7 +16,7 @@ build=root/'build'
 if build.exists(): shutil.rmtree(build)
 for name in ['res/drawable','assets','classes','dex']:(build/name).mkdir(parents=True,exist_ok=True)
 shutil.copy(repo/'dist/icon-192.png',build/'res/drawable/icon.png')
-assets=['index.html','app.js','core.mjs','health.mjs','style.css','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png']
+assets=['index.html','app.js','core.mjs','health.mjs','activity.mjs','strength.mjs','style.css','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png']
 for filename in assets:shutil.copy(repo/'dist'/filename,build/'assets'/filename)
 def run(*command): subprocess.run([str(x) for x in command],check=True,cwd=repo)
 run(tools/'aapt2','compile','--dir',build/'res','-o',build/'resources.zip')

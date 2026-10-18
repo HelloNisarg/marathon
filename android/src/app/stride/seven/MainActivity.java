@@ -16,10 +16,11 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net";
     private static final String[] PERMISSIONS={"android.permission.health.READ_STEPS","android.permission.health.READ_EXERCISE","android.permission.health.READ_DISTANCE"};
-    private static final int HEALTH_PERMISSION=40, SAVE_FILE=41, OPEN_FILE=42;
+    private static final int HEALTH_PERMISSION=40, SAVE_FILE=41, OPEN_FILE=42, WATER_PERMISSION=43;
     private WebView web;
     private boolean busy=false,resumed=false,pageReady=false;
     private String pendingResult=null,pendingFile=null;
+    private String[] pendingWater=null;
     private ValueCallback<Uri[]> fileCallback;
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
 
@@ -43,7 +44,7 @@ public class MainActivity extends Activity {
                 if(!"https".equals(uri.getScheme())||!"appassets.androidplatform.net".equals(uri.getHost())||path==null||path.contains(".."))return blocked();
                 if(path.equals("/"))path="/index.html";
                 String file=path.substring(1);
-                if(!Arrays.asList("index.html","app.js","core.mjs","health.mjs","style.css","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png").contains(file))return blocked();
+                if(!Arrays.asList("index.html","app.js","core.mjs","health.mjs","activity.mjs","strength.mjs","style.css","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png").contains(file))return blocked();
                 try{
                     String mime=file.endsWith(".html")?"text/html":file.endsWith(".js")||file.endsWith(".mjs")?"text/javascript":file.endsWith(".css")?"text/css":file.endsWith(".svg")?"image/svg+xml":file.endsWith(".png")?"image/png":"application/json";
                     Map<String,String> headers=new HashMap<>();
@@ -72,7 +73,7 @@ public class MainActivity extends Activity {
         web.loadUrl(ORIGIN+"/index.html");
     }
     private WebResourceResponse blocked(){return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
-    @Override public void onResume(){super.onResume();resumed=true;if(web!=null)web.onResume();deliverPending();}
+    @Override public void onResume(){super.onResume();resumed=true;if(web!=null)web.onResume();deliverPending();if(web!=null&&pageReady)web.evaluateJavascript("window.dispatchEvent(new Event('stride-native-resume'))",null);}
     @Override public void onPause(){resumed=false;if(web!=null)web.onPause();super.onPause();}
     @Override public void onDestroy(){worker.shutdownNow();if(fileCallback!=null)fileCallback.onReceiveValue(null);if(web!=null){web.removeJavascriptInterface("AndroidStride");web.destroy();}super.onDestroy();}
     @Override public void onBackPressed(){web.evaluateJavascript("(function(){const d=document.querySelector('#modal');if(d&&d.open){d.close();return true;}if(location.hash&&location.hash!=='#today'){location.hash='today';return true;}return false;})()",value->{if(!"true".equals(value))finish();});}
@@ -90,7 +91,9 @@ public class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grants){
         super.onRequestPermissionsResult(code,permissions,grants);
         if(code==HEALTH_PERMISSION){if(hasPermissions())sync();else message("Permission was not granted for all three data types. No data was imported. You can review Stride in Health Connect app permissions.");}
+        if(code==WATER_PERMISSION&&pendingWater!=null){String[] q=pendingWater;pendingWater=null;if(checkSelfPermission("android.permission.POST_NOTIFICATIONS")==PackageManager.PERMISSION_GRANTED)waterConfig(true,q);else message("Notifications remain off. Your reminder times were saved, but phone alerts were not enabled.");}
     }
+    private void waterConfig(boolean enabled,String[] values){try{WaterReminder.update(this,enabled,values[0],values[1],Integer.parseInt(values[2]),Integer.parseInt(values[3]));message(enabled?"Phone water reminders enabled. Delivery times may vary with battery settings.":"Phone water reminders turned off.");if(pageReady)web.evaluateJavascript("window.dispatchEvent(new Event('stride-water-status'))",null);}catch(Exception error){message("Could not schedule water reminders. Check the times and try again.");}}
     private void sync(){
         if(busy||!hasPermissions())return;busy=true;message("Reading Samsung Health… Keep Stride open.");
         worker.execute(()->{
@@ -107,6 +110,12 @@ public class MainActivity extends Activity {
         }
     }
     public final class Bridge {
+        @JavascriptInterface public String liveHistory(){return getSharedPreferences(TrackingService.PREF,0).getString("history","[]");}
+        @JavascriptInterface public int liveStepCount(){return getSharedPreferences(TrackingService.PREF,0).getInt("steps."+TrackingService.today(),0);}
+        @JavascriptInterface public void mergeLiveHistory(String raw){if(raw==null||raw.length()>1000000)return;runOnUiThread(()->{try{org.json.JSONArray incoming=new org.json.JSONArray(raw),current=new org.json.JSONArray(getSharedPreferences(TrackingService.PREF,0).getString("history","[]"));java.util.LinkedHashMap<String,org.json.JSONObject> map=new java.util.LinkedHashMap<>();for(int i=0;i<incoming.length();i++){org.json.JSONObject v=incoming.getJSONObject(i);if(v.has("id"))map.put(v.getString("id"),v);}for(int i=0;i<current.length();i++){org.json.JSONObject v=current.getJSONObject(i);if(v.has("id"))map.put(v.getString("id"),v);}org.json.JSONArray merged=new org.json.JSONArray();for(org.json.JSONObject v:map.values())merged.put(v);getSharedPreferences(TrackingService.PREF,0).edit().putString("history",merged.toString()).apply();}catch(Exception error){message("Could not merge live history from this backup.");}});}
+        @JavascriptInterface public boolean waterReminderEnabled(){return WaterReminder.data(MainActivity.this).getBoolean("enabled",false);}
+        @JavascriptInterface public void updateWaterLog(String date,int ml){if(date!=null&&date.matches("20\\d{2}-\\d{2}-\\d{2}")&&ml>=0&&ml<=20000)runOnUiThread(()->{WaterReminder.log(MainActivity.this,date,ml);WaterReminder.schedule(MainActivity.this);});}
+        @JavascriptInterface public void configureWater(boolean on,String start,String end,int interval,int goal){runOnUiThread(()->{String[] values={start,end,String.valueOf(interval),String.valueOf(goal)};if(on&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=PackageManager.PERMISSION_GRANTED){pendingWater=values;requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},WATER_PERMISSION);}else waterConfig(on,values);});}
         @JavascriptInterface public void openLiveTracking(String name,int stepGoal){runOnUiThread(()->{getSharedPreferences(TrackingService.PREF,0).edit().putString("name",name==null?"Your profile":name.substring(0,Math.min(40,name.length()))).putInt("stepGoal",Math.max(1000,Math.min(30000,stepGoal))).apply();startActivity(new Intent(MainActivity.this,TrackingActivity.class));});}
         @JavascriptInterface public void syncSamsungHealth(){runOnUiThread(()->connect());}
         @JavascriptInterface public void saveFile(String name,String content,String mime){

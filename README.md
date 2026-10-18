@@ -84,3 +84,13 @@ stores an independent profile with no account or paid backend. Native live histo
 is separate from planner/Samsung imports and has its own export. See
 [Android setup and limitations](android/README.md). Actual device testing remains
 required; host tests cannot validate Samsung sensor/battery behavior.
+
+## Android 1.2 and refreshed web UI
+
+Hydration reminders are optional local Android notifications scheduled with
+inexact alarms. Strength mode gives guided sets and written exercise tutorials.
+Progress combines Samsung Health, live and manual activity records, with
+conservative duplicate checks. Finished live sessions are included in the
+regular JSON backup. The responsive UI follows Apple's published principles
+of hierarchy, clarity and accessibility while retaining the Stride identity.
+The Android package has no Internet permission or paid backend.
